@@ -1,0 +1,254 @@
+<script lang="ts">
+    import { Parser } from "bulletin-board-code";
+    import chroma, { type Color, type InterpolationMode } from "chroma-js";
+
+    const colorSpaces: Record<string, InterpolationMode> = {
+        rgb: "rgb",
+        hsl: "hsl",
+    };
+
+    const parser = new Parser();
+
+    let colors = [chroma("#ff0000"), chroma("#00ff00"), chroma("#0000ff")];
+    let text = "Hello, world!";
+    let bbCode = "";
+    let colorSpace = colorSpaces.hsl;
+    let showClipboardMessage = false;
+
+    function addColor(): void {
+        colors = [...colors, chroma("black")];
+    }
+
+    function getHexColorAtPos(index: number): Color {
+        const relPos = index / (text.length - 1);
+        const decimalIndex = relPos * (colors.length - 1);
+        const sectionStartColor = colors[Math.floor(decimalIndex)];
+        const sectionEndColor = colors[Math.ceil(decimalIndex)];
+        const sectionPos = decimalIndex - Math.floor(decimalIndex);
+
+        return chroma.mix(
+            sectionStartColor,
+            sectionEndColor,
+            sectionPos,
+            colorSpace,
+        );
+    }
+
+    function colorsAreEqual(a: Color, b: Color): boolean {
+        const rgbA = a.rgb();
+        const rgbB = b.rgb();
+
+        return (
+            rgbA[0] === rgbB[0] && rgbA[1] === rgbB[1] && rgbA[2] === rgbB[2]
+        );
+    }
+
+    function isWhitespace(char: string): boolean {
+        return /\s/.test(char);
+    }
+
+    function getBbCode(): string {
+        let bbCode = "";
+
+        for (let i = 0; i < text.length; i++) {
+            let color = getHexColorAtPos(i);
+            if (i === 0 || color !== getHexColorAtPos(i - 1)) {
+                bbCode += `[color=${color.hex("rgb")}]`;
+            }
+            bbCode += text[i];
+
+            while (
+                i < text.length - 1 &&
+                (isWhitespace(text[i + 1]) ||
+                    colorsAreEqual(color, getHexColorAtPos(i + 1)))
+            ) {
+                bbCode += text[i + 1];
+                i++;
+                color = getHexColorAtPos(i);
+            }
+
+            if (i === text.length - 1 || color !== getHexColorAtPos(i + 1)) {
+                bbCode += "[/color]";
+            }
+        }
+
+        return bbCode;
+    }
+
+    async function copyTextToClipboard(): Promise<void> {
+        await navigator.clipboard.writeText(getBbCode());
+        showClipboardMessage = true;
+        setTimeout(() => {
+            showClipboardMessage = false;
+        }, 2000);
+    }
+
+    function generate(): void {
+        bbCode = getBbCode();
+    }
+</script>
+
+<div id="card">
+    <h1>BBGradient</h1>
+    <div>
+        <h2>Text</h2>
+        <textarea bind:value={text} />
+    </div>
+    <div>
+        <h2>Colors</h2>
+        {#each colors as color}
+            <div class="color">
+                <input type="color" bind:value={color} />
+                {#if colors.length > 1}
+                    <button
+                        class="remove"
+                        on:click={() =>
+                            (colors = colors.filter((c) => c !== color))}
+                    >
+                        Remove
+                    </button>
+                {/if}
+            </div>
+        {/each}
+        <button on:click={addColor}>Add color</button>
+    </div>
+    <div>
+        <label>
+            Color space:
+            <select bind:value={colorSpace}>
+                {#each Object.keys(colorSpaces) as space}
+                    <option value={colorSpaces[space]}>
+                        {space}
+                    </option>
+                {/each}
+            </select>
+        </label>
+    </div>
+    <div>
+        <button id="generate-button" on:click={generate}>Generate</button>
+    </div>
+    <div class="divider" />
+    <div>
+        <h2>Result</h2>
+        <span>BBCode:</span>
+        <textarea readonly>{bbCode}</textarea>
+        <button on:click={copyTextToClipboard}>Copy</button>
+        <span
+            id="clipboard-message"
+            class={showClipboardMessage ? "" : "hidden"}
+        >
+            ✔ Copied!
+        </span>
+    </div>
+    <div>
+        <h2>Preview</h2>
+        <pre>{@html parser.toHTML(bbCode)}</pre>
+        <pre class="bg-black">{@html parser.toHTML(bbCode)}</pre>
+        <pre class="bg-white">{@html parser.toHTML(bbCode)}</pre>
+    </div>
+    <div class="center">
+        <a href="https://github.com/Pasi4K5/bb-gradient" target="_blank">
+            Source code
+        </a>
+    </div>
+</div>
+
+<style>
+    :global(body) {
+        background-color: #202530;
+    }
+
+    * {
+        color: white;
+        font-family: "Nunito", sans-serif;
+        font-optical-sizing: auto;
+        font-style: normal;
+    }
+
+    button,
+    input[type="color"] {
+        cursor: pointer;
+        background-color: #202530;
+        border: none;
+        border-radius: 5px;
+    }
+
+    #card {
+        background-color: #2a2f3a;
+        border-radius: 10px;
+        margin: 20px auto;
+        padding: 20px;
+        width: 400px;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    textarea {
+        background-color: #202530;
+        width: 100%;
+        height: 100px;
+        resize: vertical;
+    }
+
+    div.color {
+        display: flex;
+        margin-bottom: 5px;
+    }
+
+    button.remove {
+        background-color: #ff5050;
+        color: white;
+        margin-left: 5px;
+    }
+
+    #generate-button {
+        font-weight: bold;
+    }
+
+    select {
+        background-color: #202530;
+        color: white;
+        border-radius: 5px;
+        text-transform: uppercase;
+    }
+
+    h1,
+    h2 {
+        margin: 0;
+    }
+
+    #clipboard-message {
+        color: limegreen;
+    }
+
+    .hidden {
+        opacity: 0;
+    }
+
+    .divider {
+        background-color: lightgray;
+        height: 1px;
+    }
+
+    .center {
+        font-size: 12px;
+        text-align: center;
+    }
+
+    .bg-white {
+        background-color: white;
+    }
+
+    .bg-black {
+        background-color: black;
+    }
+
+    pre {
+        white-space: pre-wrap;
+        padding: 4px;
+        border-radius: 4px;
+    }
+</style>
