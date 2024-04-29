@@ -128,7 +128,7 @@
         <button id="generate-button" on:click={generate}>Generate</button>
     </div>
     <div class="divider" />
-    <div>
+    <div class={bbCode ? "" : "hidden"}>
         <h2>Result</h2>
         <span>BBCode:</span>
         <textarea readonly>{bbCode}</textarea>
@@ -140,7 +140,7 @@
             ✔ Copied!
         </span>
     </div>
-    <div>
+    <div class={bbCode ? "" : "hidden"}>
         <h2>Preview</h2>
         <pre>{@html parser.toHTML(bbCode)}</pre>
         <pre class="bg-black">{@html parser.toHTML(bbCode)}</pre>
@@ -225,7 +225,7 @@
     }
 
     .hidden {
-        opacity: 0;
+        display: none;
     }
 
     .divider {
