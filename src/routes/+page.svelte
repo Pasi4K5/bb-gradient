@@ -19,21 +19,6 @@
         colors = [...colors, chroma("black")];
     }
 
-    function getHexColorAtPos(index: number): Color {
-        const relPos = index / (text.length - 1);
-        const decimalIndex = relPos * (colors.length - 1);
-        const sectionStartColor = colors[Math.floor(decimalIndex)];
-        const sectionEndColor = colors[Math.ceil(decimalIndex)];
-        const sectionPos = decimalIndex - Math.floor(decimalIndex);
-
-        return chroma.mix(
-            sectionStartColor,
-            sectionEndColor,
-            sectionPos,
-            interpolationMode,
-        );
-    }
-
     function colorsAreEqual(a: Color, b: Color): boolean {
         const rgbA = a.rgb();
         const rgbB = b.rgb();
@@ -47,44 +32,60 @@
         return /\s/.test(char);
     }
 
-    function getBbCode(): string {
-        let bbCode = "";
-
-        for (let i = 0; i < text.length; i++) {
-            let color = getHexColorAtPos(i);
-            if (i === 0 || color !== getHexColorAtPos(i - 1)) {
-                bbCode += `[color=${color.hex("rgb")}]`;
-            }
-            bbCode += text[i];
-
-            while (
-                i < text.length - 1 &&
-                (isWhitespace(text[i + 1]) ||
-                    colorsAreEqual(color, getHexColorAtPos(i + 1)))
-            ) {
-                bbCode += text[i + 1];
-                i++;
-                color = getHexColorAtPos(i);
-            }
-
-            if (i === text.length - 1 || color !== getHexColorAtPos(i + 1)) {
-                bbCode += "[/color]";
-            }
-        }
-
-        return bbCode;
-    }
-
     async function copyTextToClipboard(): Promise<void> {
-        await navigator.clipboard.writeText(getBbCode());
+        await navigator.clipboard.writeText(bbCode);
         showClipboardMessage = true;
         setTimeout(() => {
             showClipboardMessage = false;
         }, 2000);
     }
 
-    function generate(): void {
-        bbCode = getBbCode();
+    $: {
+        const getHexColorAtPos = (index: number): Color => {
+            const relPos = index / (text.length - 1);
+
+            if (isNaN(relPos)) {
+                return colors[0];
+            }
+
+            const decimalIndex = relPos * (colors.length - 1);
+            const sectionStartColor: Color = colors[Math.floor(decimalIndex)];
+            const sectionEndColor = colors[Math.ceil(decimalIndex)];
+            const sectionPos = decimalIndex - Math.floor(decimalIndex);
+
+            return chroma.mix(
+                sectionStartColor,
+                sectionEndColor,
+                sectionPos,
+                interpolationMode,
+            );
+        };
+
+        let code = "";
+
+        for (let i = 0; i < text.length; i++) {
+            let color = getHexColorAtPos(i);
+            if (i === 0 || color !== getHexColorAtPos(i - 1)) {
+                code += `[color=${color.hex("rgb")}]`;
+            }
+            code += text[i];
+
+            while (
+                i < text.length - 1 &&
+                (isWhitespace(text[i + 1]) ||
+                    colorsAreEqual(color, getHexColorAtPos(i + 1)))
+            ) {
+                code += text[i + 1];
+                i++;
+                color = getHexColorAtPos(i);
+            }
+
+            if (i === text.length - 1 || color !== getHexColorAtPos(i + 1)) {
+                code += "[/color]";
+            }
+        }
+
+        bbCode = code;
     }
 </script>
 
@@ -124,11 +125,8 @@
             </select>
         </label>
     </div>
-    <div>
-        <button id="generate-button" on:click={generate}>Generate</button>
-    </div>
     <div class="divider" />
-    <div class={bbCode ? "" : "hidden"}>
+    <div>
         <h2>Result</h2>
         <span>BBCode:</span>
         <textarea readonly>{bbCode}</textarea>
@@ -140,7 +138,7 @@
             ✔ Copied!
         </span>
     </div>
-    <div class={bbCode ? "" : "hidden"}>
+    <div>
         <h2>Preview</h2>
         <pre>{@html parser.toHTML(bbCode)}</pre>
         <pre class="bg-black">{@html parser.toHTML(bbCode)}</pre>
@@ -204,10 +202,6 @@
         margin-left: 5px;
     }
 
-    #generate-button {
-        font-weight: bold;
-    }
-
     select {
         background-color: #202530;
         color: white;
@@ -246,6 +240,7 @@
 
     pre {
         white-space: pre-wrap;
+        word-break: break-word;
         padding: 4px;
     }
 </style>
