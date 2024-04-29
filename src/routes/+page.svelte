@@ -2,17 +2,17 @@
     import { Parser } from "bulletin-board-code";
     import chroma, { type Color, type InterpolationMode } from "chroma-js";
 
-    const colorSpaces: Record<string, InterpolationMode> = {
-        rgb: "rgb",
-        hsl: "hsl",
-    };
+    const interpolationModes: { mode: InterpolationMode; name: string }[] = [
+        { mode: "hsl", name: "HSL (Recommended)" },
+        { mode: "rgb", name: "RGB" },
+    ];
 
     const parser = new Parser();
 
     let colors = [chroma("#ff0000"), chroma("#00ff00"), chroma("#0000ff")];
     let text = "Hello, world!";
     let bbCode = "";
-    let colorSpace = colorSpaces.hsl;
+    let interpolationMode: InterpolationMode = "hsl";
     let showClipboardMessage = false;
 
     function addColor(): void {
@@ -30,7 +30,7 @@
             sectionStartColor,
             sectionEndColor,
             sectionPos,
-            colorSpace,
+            interpolationMode,
         );
     }
 
@@ -114,11 +114,11 @@
     </div>
     <div>
         <label>
-            Color space:
-            <select bind:value={colorSpace}>
-                {#each Object.keys(colorSpaces) as space}
-                    <option value={colorSpaces[space]}>
-                        {space}
+            Interpolation Mode:
+            <select bind:value={interpolationMode}>
+                {#each interpolationModes as { mode, name }}
+                    <option value={mode}>
+                        {name}
                     </option>
                 {/each}
             </select>
@@ -163,6 +163,7 @@
         font-family: "Nunito", sans-serif;
         font-optical-sizing: auto;
         font-style: normal;
+        border-radius: 5px;
     }
 
     button,
@@ -170,7 +171,6 @@
         cursor: pointer;
         background-color: #202530;
         border: none;
-        border-radius: 5px;
     }
 
     #card {
@@ -211,8 +211,6 @@
     select {
         background-color: #202530;
         color: white;
-        border-radius: 5px;
-        text-transform: uppercase;
     }
 
     h1,
@@ -249,6 +247,5 @@
     pre {
         white-space: pre-wrap;
         padding: 4px;
-        border-radius: 4px;
     }
 </style>
