@@ -3,7 +3,7 @@
     import chroma, { type Color, type InterpolationMode } from "chroma-js";
 
     const interpolationModes: { mode: InterpolationMode; name: string }[] = [
-        { mode: "hsl", name: "HSL (Recommended)" },
+        { mode: "hsl", name: "HSL" },
         { mode: "rgb", name: "RGB" },
     ];
 
