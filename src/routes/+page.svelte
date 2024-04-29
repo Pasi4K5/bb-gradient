@@ -14,6 +14,7 @@
     let bbCode = "";
     let interpolationMode: InterpolationMode = "hsl";
     let showClipboardMessage = false;
+    let previewBackgroundColor = "#ffffff";
 
     function addColor(): void {
         colors = [...colors, chroma("black")];
@@ -140,9 +141,20 @@
     </div>
     <div>
         <h2>Preview</h2>
-        <pre>{@html parser.toHTML(bbCode)}</pre>
-        <pre class="bg-black">{@html parser.toHTML(bbCode)}</pre>
-        <pre class="bg-white">{@html parser.toHTML(bbCode)}</pre>
+        <label>
+            Background color:
+            <input
+                type="color"
+                bind:value={previewBackgroundColor}
+                class={previewBackgroundColor === "#ffffff"
+                    ? "bg-black"
+                    : "bg-white"}
+            />
+        </label>
+        <pre
+            style={`background-color: ${previewBackgroundColor};`}>{@html parser.toHTML(
+                bbCode,
+            )}</pre>
     </div>
     <div class="center">
         <a href="https://github.com/Pasi4K5/bb-gradient" target="_blank">
@@ -228,14 +240,6 @@
     .center {
         font-size: 12px;
         text-align: center;
-    }
-
-    .bg-white {
-        background-color: white;
-    }
-
-    .bg-black {
-        background-color: black;
     }
 
     pre {
