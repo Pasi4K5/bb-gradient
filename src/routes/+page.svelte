@@ -46,6 +46,8 @@
     }
 
     $effect(() => {
+        console.log("text updated");
+
         const getHexColorAtPos = (index: number): Color => {
             const relPos = index / (text.length - 1);
 
