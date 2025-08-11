@@ -9,12 +9,16 @@
 
     const parser = new Parser();
 
-    let colors = [chroma("#ff0000"), chroma("#00ff00"), chroma("#0000ff")];
-    let text = "Hello, world!";
-    let bbCode = "";
-    let interpolationMode: InterpolationMode = "hsl";
-    let showClipboardMessage = false;
-    let previewBackgroundColor = "#ffffff";
+    let colors = $state([
+        chroma("#ff0000"),
+        chroma("#00ff00"),
+        chroma("#0000ff"),
+    ]);
+    let text = $state("Hello, world!");
+    let bbCode = $state("");
+    let interpolationMode: InterpolationMode = $state("hsl");
+    let showClipboardMessage = $state(false);
+    let previewBackgroundColor = $state("#ffffff");
 
     function addColor(): void {
         colors = [...colors, chroma("black")];
@@ -41,7 +45,7 @@
         }, 2000);
     }
 
-    $: {
+    $effect(() => {
         const getHexColorAtPos = (index: number): Color => {
             const relPos = index / (text.length - 1);
 
@@ -87,24 +91,24 @@
         }
 
         bbCode = code;
-    }
+    });
 </script>
 
 <div id="card">
     <h1>BBGradient</h1>
     <div>
         <h2>Text</h2>
-        <textarea bind:value={text} />
+        <textarea bind:value={text}></textarea>
     </div>
     <div>
         <h2>Colors</h2>
-        {#each colors as color}
+        {#each colors as color, i}
             <div class="color">
-                <input type="color" bind:value={color} />
+                <input type="color" bind:value={colors[i]} />
                 {#if colors.length > 1}
                     <button
                         class="remove"
-                        on:click={() =>
+                        onclick={() =>
                             (colors = colors.filter((c) => c !== color))}
                     >
                         Remove
@@ -112,7 +116,7 @@
                 {/if}
             </div>
         {/each}
-        <button on:click={addColor}>Add color</button>
+        <button onclick={addColor}>Add color</button>
     </div>
     <div>
         <label>
@@ -126,12 +130,12 @@
             </select>
         </label>
     </div>
-    <div class="divider" />
+    <div class="divider"></div>
     <div>
         <h2>Result</h2>
         <span>BBCode:</span>
         <textarea readonly>{bbCode}</textarea>
-        <button on:click={copyTextToClipboard}>Copy</button>
+        <button onclick={copyTextToClipboard}>Copy</button>
         <span
             id="clipboard-message"
             class={showClipboardMessage ? "" : "hidden"}
@@ -142,7 +146,7 @@
     <div>
         <h2>Preview</h2>
         <label>
-            Background color:
+            Preview background:
             <input
                 type="color"
                 bind:value={previewBackgroundColor}
@@ -229,7 +233,7 @@
     }
 
     .hidden {
-        display: none;
+        opacity: 0;
     }
 
     .divider {
