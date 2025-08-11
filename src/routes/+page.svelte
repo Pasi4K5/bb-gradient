@@ -50,7 +50,9 @@
             const relPos = index / (text.length - 1);
 
             if (isNaN(relPos)) {
-                return colors[0];
+                const color = colors[0] as string | Color;
+
+                return typeof color === "string" ? chroma(color) : color;
             }
 
             const decimalIndex = relPos * (colors.length - 1);
